@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Hnefatafl.Engine.Models
 {
@@ -8,17 +7,17 @@ namespace Hnefatafl.Engine.Models
         public LabeledIndex Column { get; }
         public LabeledIndex Row { get; }
 
-        internal Coordinates(int column, int row)
+        internal Coordinates(int row, int column)
         {
             Column = new(column, ((char)('A' + column)).ToString());
             Row = new(row, row.ToString());
         }
 
-        public void Deconstruct(out int column, out int row) => (column, row) = (Column.Index, Row.Index);
+        public void Deconstruct(out int row, out int column) => (row, column) = (Row.Index, Column.Index);
 
         public override string ToString() => $"{Column.Label}{Row.Label}";
 
-        public static (int columns, int rows) operator -(Coordinates left, Coordinates right) => new(left.Column - right.Column, left.Row - right.Row);
+        public static (int rows, int columns) operator -(Coordinates left, Coordinates right) => new(left.Row - right.Row, left.Column - right.Column);
 
         public readonly struct LabeledIndex(int index, string label)
         {

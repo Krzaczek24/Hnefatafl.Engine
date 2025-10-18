@@ -36,13 +36,13 @@ namespace Hnefatafl.Engine.Models
             if (!Board.CanMove(pawn))
                 return MoveResult.PawnCannotMove;
 
-            if (pawn.Field.Coordinates.Column != field.Coordinates.Column
-            && pawn.Field.Coordinates.Row != field.Coordinates.Row)
+            if (pawn.Field.Coordinates.Row != field.Coordinates.Row
+            && pawn.Field.Coordinates.Column != field.Coordinates.Column)
                 return MoveResult.NotInLine;
 
-            for (int column = pawn.Field.Coordinates.Column; column <= field.Coordinates.Column; column++)
-                for (int row = pawn.Field.Coordinates.Row; row <= field.Coordinates.Row; row++)
-                    if (Board[column, row].Pawn is not null && Board[column, row].Pawn != pawn)
+            for (int row = pawn.Field.Coordinates.Row; row <= field.Coordinates.Row; row++)
+                for (int column = pawn.Field.Coordinates.Column; column <= field.Coordinates.Column; column++)
+                    if (Board[row, column].Pawn is not null && Board[row, column].Pawn != pawn)
                         return MoveResult.PathBlocked;
 
             return MoveResult.Success;
@@ -55,14 +55,9 @@ namespace Hnefatafl.Engine.Models
             {
                 // make move here
                 // check if fight or game over
+                SwapCurrentPlayer();
             }
             return canMakeMoveResult;
-        }
-
-        public bool IsInLine(Pawn pawn, Coordinates target)
-        {
-            return pawn.Field.Coordinates.Column == target.Column
-                || pawn.Field.Coordinates.Row == target.Row;
         }
 
         private void SwapCurrentPlayer()

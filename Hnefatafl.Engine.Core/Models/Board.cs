@@ -1,6 +1,7 @@
 ﻿using Hnefatafl.Engine.Enums;
 using Hnefatafl.Engine.Models.Pawns;
 using KrzaqTools.Collections;
+using KrzaqTools.Extensions;
 
 namespace Hnefatafl.Engine.Models
 {
@@ -35,6 +36,21 @@ namespace Hnefatafl.Engine.Models
                 .Select(field => field.Pawn!);
         }
 
+        public IEnumerable<Field> GetPawnAvailableFields(Pawn pawn)
+        {
+            var row = this.GetRow(pawn.Field.Coordinates.Row);
+            var column = this.GetColumn(pawn.Field.Coordinates.Column);
+            return GetFromPawnToSide(row)
+                .Concat(GetFromPawnToSide(column))
+                .Concat(GetFromPawnToSide(row.Reverse()))
+                .Concat(GetFromPawnToSide(column.Reverse()));
+
+            IEnumerable<Field> GetFromPawnToSide(IEnumerable<Field> first) => first
+                .SkipWhile(field => field != pawn.Field)
+                .Skip(1)
+                .TakeWhile(field => field.Pawn is null && !field.IsCenter && !field.IsCorner);
+        }
+
         public bool CanMove(Pawn pawn)
         {
             var adjacentFields = GetAdjacentFields(pawn.Field);
@@ -45,15 +61,15 @@ namespace Hnefatafl.Engine.Models
 
         public IEnumerable<Field> GetAdjacentFields(Field field)
         {
-            var (column, row) = field.Coordinates;
-            if (column > 0)
-                yield return this[column - 1, row];
-            if (column < SIZE - 1)
-                yield return this[column + 1, row];
+            var (row, column) = field.Coordinates;
             if (row > 0)
-                yield return this[column, row - 1];
+                yield return this[row - 1, column];
             if (row < SIZE - 1)
-                yield return this[column, row + 1];
+                yield return this[row + 1, column];
+            if (column > 0)
+                yield return this[row, column - 1];
+            if (column < SIZE - 1)
+                yield return this[row, column + 1];
         }
 
         public override int GetHashCode() => HashCode.Combine(this);
@@ -68,9 +84,9 @@ namespace Hnefatafl.Engine.Models
         private static Field[,] GetEmptyTable()
         {
             var table = new Field[SIZE, SIZE];
-            for (int column = 0; column < SIZE; column++)
-                for (int row = 0; row < SIZE; row++)
-                    table[column, row] = new Field(column, row);
+            for (int row = 0; row < SIZE; row++)
+                for (int column = 0; column < SIZE; column++)
+                    table[row, column] = new Field(column, row);
             return table;
         }
     }

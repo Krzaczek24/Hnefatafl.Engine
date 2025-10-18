@@ -14,9 +14,9 @@ namespace Hnefatafl.Engine.Models
         public string Label => Coordinates.ToString();
         public Pawn? Pawn { get; set; }
     
-        public Field(int column, int row)
+        public Field(int row, int column)
         {
-            Coordinates = new(column, row);
+            Coordinates = new(row, column);
 
             IsCorner = column % (Board.SIZE - 1) == 0 && row % (Board.SIZE - 1) == 0;
             IsCenter = column == Board.MIDDLE_INDEX && row == Board.MIDDLE_INDEX;
