@@ -29,11 +29,15 @@ namespace Hnefatafl.Engine.Models
             }
         }
 
-        public IEnumerable<Pawn> GetPawns(Player player)
+        public IEnumerable<Pawn> GetPawns(Player player, bool withMoveAvailableOnly)
         {
-            return this
+            var pawns = this
                 .Where(field => field.Pawn is not null && player.HasFlag(field.Pawn.Player))
                 .Select(field => field.Pawn!);
+
+            return withMoveAvailableOnly
+                ? pawns.Where(CanMove)
+                : pawns;
         }
 
         public IEnumerable<Field> GetPawnAvailableFields(Pawn pawn)

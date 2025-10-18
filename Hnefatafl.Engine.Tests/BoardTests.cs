@@ -50,7 +50,7 @@ namespace Hnefatafl.Engine.Tests
 
             // -- Act --
             game.Start();
-            var pawnsAbleToMove = game.Board.GetPawns(Player.All).Where(game.Board.CanMove).ToList();
+            var pawnsAbleToMove = game.Board.GetPawns(Player.All, true).ToList();
 
             // -- Assert --
             Assert.Multiple(() =>

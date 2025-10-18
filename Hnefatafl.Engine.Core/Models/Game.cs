@@ -11,7 +11,7 @@ namespace Hnefatafl.Engine.Models
 
         public Player CurrentPlayer { get; private set; } = Player.Attacker;
 
-        public IEnumerable<Pawn> CurrentPlayerAvailablePawns => Board.GetPawns(CurrentPlayer).Where(Board.CanMove);
+        public IEnumerable<Pawn> CurrentPlayerAvailablePawns => Board.GetPawns(CurrentPlayer, true);
 
         public Game()
         {
