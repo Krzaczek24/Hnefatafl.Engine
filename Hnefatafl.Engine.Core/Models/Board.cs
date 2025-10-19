@@ -55,7 +55,7 @@ namespace Hnefatafl.Engine.Models
             IEnumerable<Field> GetFromPawnToSide(IEnumerable<Field> first) => first
                 .SkipWhile(field => field != pawn.Field)
                 .Skip(1)
-                .TakeWhile(field => field.IsEmpty && !field.IsCenter && !field.IsCorner);
+                .TakeWhile(field => field.IsEmpty && (!field.IsCenter && !field.IsCorner || pawn is King));
         }
 
         public bool CanMove(Pawn pawn)

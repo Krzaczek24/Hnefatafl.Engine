@@ -1,6 +1,6 @@
 ﻿namespace Hnefatafl.Engine.Enums
 {
-    public enum MoveResult
+    public enum MoveValidationResult
     {
         Success,
         NonCurrentPlayerPawn,

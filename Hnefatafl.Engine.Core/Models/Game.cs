@@ -5,6 +5,7 @@ namespace Hnefatafl.Engine.Models
 {
     public class Game
     {
+        // EVENTS OnGameOver OnPawnKilled etc ...
         public bool IsGameOver { get; private set; }
 
         public Board Board { get; }
@@ -25,40 +26,43 @@ namespace Hnefatafl.Engine.Models
             IsGameOver = false;
         }
 
-        public MoveResult CanMakeMove(Pawn pawn, Field field)
+        public MoveValidationResult CanMakeMove(Pawn pawn, Field field)
         {
             if (!CurrentPlayerAvailablePawns.Contains(pawn))
-                return MoveResult.NonCurrentPlayerPawn;
+                return MoveValidationResult.NonCurrentPlayerPawn;
 
             if (field == pawn.Field)
-                return MoveResult.PawnAlreadyHere;
+                return MoveValidationResult.PawnAlreadyHere;
 
             if (!Board.CanMove(pawn))
-                return MoveResult.PawnCannotMove;
+                return MoveValidationResult.PawnCannotMove;
 
             if (pawn.Field.Coordinates.Row != field.Coordinates.Row
             && pawn.Field.Coordinates.Column != field.Coordinates.Column)
-                return MoveResult.NotInLine;
+                return MoveValidationResult.NotInLine;
 
             for (int row = pawn.Field.Coordinates.Row; row <= field.Coordinates.Row; row++)
                 for (int column = pawn.Field.Coordinates.Column; column <= field.Coordinates.Column; column++)
                     if (!Board[row, column].IsEmpty && Board[row, column].Pawn != pawn)
-                        return MoveResult.PathBlocked;
+                        return MoveValidationResult.PathBlocked;
 
-            return MoveResult.Success;
+            return MoveValidationResult.Success;
         }
 
-        public MoveResult MakeMove(Pawn pawn, Field field)
+        public MoveValidationResult MakeMove(Pawn pawn, Field field) // return MoveResult
         {
-            MoveResult canMakeMoveResult = CanMakeMove(pawn, field);
-            if (canMakeMoveResult is MoveResult.Success)
+            MoveValidationResult moveValidationResult = CanMakeMove(pawn, field);
+
+            if (moveValidationResult is MoveValidationResult.Success)
             {
-                Board.MovePawn(pawn, field);
-                // check if fight
-                // check if game over
+                Board.MovePawn(pawn, field); // return MoveResult
+                //if (moveResult is MoveResult.KingEscaped or MoveResult.KingKilled or MoveResult.LastAttackerKilled)
+                //    EndGame();
+                //else
                 SwapCurrentPlayer();
             }
-            return canMakeMoveResult;
+
+            return moveValidationResult;
         }
 
         private void SwapCurrentPlayer()
@@ -69,6 +73,12 @@ namespace Hnefatafl.Engine.Models
                 Player.Defender => Player.Attacker,
                 _ => throw new InvalidOperationException(),
             };
+        }
+
+        private void EndGame()
+        {
+            IsGameOver = true;
+            // print winner (current player)
         }
     }
 }
