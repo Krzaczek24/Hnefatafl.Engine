@@ -12,7 +12,7 @@ namespace Hnefatafl.Engine.Models
 
         public Game Game { get; } = game;
 
-        public Field this[Coordinates coordinates] => this[coordinates.Column.Index, coordinates.Row.Index];
+        public Field this[Coordinates coordinates] => this[coordinates.Row, coordinates.Column];
 
         public void Reset()
         {
@@ -77,6 +77,12 @@ namespace Hnefatafl.Engine.Models
                 yield return this[row, column - 1];
             if (column < SIZE - 1)
                 yield return this[row, column + 1];
+        }
+
+        public static bool AreValid(Coordinates coordinates)
+        {
+            return InRange(coordinates.Row) && InRange(coordinates.Column);
+            static bool InRange(int index) => index is > 0 and < SIZE;
         }
 
         internal static void MovePawn(Pawn pawn, Field field)

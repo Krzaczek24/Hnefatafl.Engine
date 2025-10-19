@@ -17,6 +17,7 @@ namespace Hnefatafl.Engine.Models
 
         public override string ToString() => $"{Column.Label}{Row.Label}";
 
+        public static Coordinates operator +(Coordinates left, (int Rows, int Columns) right) => new(left.Row + right.Rows, left.Column + right.Columns);
         public static (int rows, int columns) operator -(Coordinates left, Coordinates right) => new(left.Row - right.Row, left.Column - right.Column);
 
         public readonly struct LabeledIndex(int index, string label)
