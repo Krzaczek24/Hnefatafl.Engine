@@ -7,11 +7,11 @@ namespace Hnefatafl.Engine.Models
         private const int SpawnRange = 3;
 
         public Coordinates Coordinates { get; }
+        public bool IsEmpty => Pawn is null;
         public bool IsCorner { get; }
         public bool IsCenter { get; }
         public bool IsDefenderSpawn { get; }
         public bool IsAttackerSpawn { get; }
-        public string Label => Coordinates.ToString();
         public Pawn? Pawn { get; set; }
     
         public Field(int row, int column)
@@ -40,6 +40,6 @@ namespace Hnefatafl.Engine.Models
 
         public override bool Equals(object? obj) => obj is Field other && Coordinates == other.Coordinates;
 
-        public override int GetHashCode() => HashCode.Combine(ToString());
+        public override int GetHashCode() => HashCode.Combine(Coordinates.ToString());
     }
 }

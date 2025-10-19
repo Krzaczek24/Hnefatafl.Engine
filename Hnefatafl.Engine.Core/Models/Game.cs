@@ -42,7 +42,7 @@ namespace Hnefatafl.Engine.Models
 
             for (int row = pawn.Field.Coordinates.Row; row <= field.Coordinates.Row; row++)
                 for (int column = pawn.Field.Coordinates.Column; column <= field.Coordinates.Column; column++)
-                    if (Board[row, column].Pawn is not null && Board[row, column].Pawn != pawn)
+                    if (!Board[row, column].IsEmpty && Board[row, column].Pawn != pawn)
                         return MoveResult.PathBlocked;
 
             return MoveResult.Success;
@@ -53,8 +53,9 @@ namespace Hnefatafl.Engine.Models
             MoveResult canMakeMoveResult = CanMakeMove(pawn, field);
             if (canMakeMoveResult is MoveResult.Success)
             {
-                // make move here
-                // check if fight or game over
+                Board.MovePawn(pawn, field);
+                // check if fight
+                // check if game over
                 SwapCurrentPlayer();
             }
             return canMakeMoveResult;

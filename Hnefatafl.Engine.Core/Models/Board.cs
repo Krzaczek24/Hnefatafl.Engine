@@ -32,7 +32,7 @@ namespace Hnefatafl.Engine.Models
         public IEnumerable<Pawn> GetPawns(Player player, bool withMoveAvailableOnly)
         {
             var pawns = this
-                .Where(field => field.Pawn is not null && player.HasFlag(field.Pawn.Player))
+                .Where(field => !field.IsEmpty && player.HasFlag(field.Pawn!.Player))
                 .Select(field => field.Pawn!);
 
             return withMoveAvailableOnly
@@ -44,15 +44,18 @@ namespace Hnefatafl.Engine.Models
         {
             var row = this.GetRow(pawn.Field.Coordinates.Row);
             var column = this.GetColumn(pawn.Field.Coordinates.Column);
-            return GetFromPawnToSide(row)
-                .Concat(GetFromPawnToSide(column))
-                .Concat(GetFromPawnToSide(row.Reverse()))
-                .Concat(GetFromPawnToSide(column.Reverse()));
+
+            return [
+                ..GetFromPawnToSide(row),
+                ..GetFromPawnToSide(column),
+                ..GetFromPawnToSide(row.Reverse()),
+                ..GetFromPawnToSide(column.Reverse())
+            ];
 
             IEnumerable<Field> GetFromPawnToSide(IEnumerable<Field> first) => first
                 .SkipWhile(field => field != pawn.Field)
                 .Skip(1)
-                .TakeWhile(field => field.Pawn is null && !field.IsCenter && !field.IsCorner);
+                .TakeWhile(field => field.IsEmpty && !field.IsCenter && !field.IsCorner);
         }
 
         public bool CanMove(Pawn pawn)
@@ -60,7 +63,7 @@ namespace Hnefatafl.Engine.Models
             var adjacentFields = GetAdjacentFields(pawn.Field);
             if (pawn is not King)
                 adjacentFields = adjacentFields.Where(field => !field.IsCenter && !field.IsCorner);
-            return adjacentFields.Any(field => field.Pawn == null);
+            return adjacentFields.Any(field => field.IsEmpty);
         }
 
         public IEnumerable<Field> GetAdjacentFields(Field field)
@@ -74,6 +77,12 @@ namespace Hnefatafl.Engine.Models
                 yield return this[row, column - 1];
             if (column < SIZE - 1)
                 yield return this[row, column + 1];
+        }
+
+        internal static void MovePawn(Pawn pawn, Field field)
+        {
+            (pawn.Field.Pawn, field.Pawn) = (field.Pawn, pawn.Field.Pawn);
+            pawn.Field = field;
         }
 
         public override int GetHashCode() => HashCode.Combine(this);
@@ -90,7 +99,7 @@ namespace Hnefatafl.Engine.Models
             var table = new Field[SIZE, SIZE];
             for (int row = 0; row < SIZE; row++)
                 for (int column = 0; column < SIZE; column++)
-                    table[row, column] = new Field(column, row);
+                    table[row, column] = new Field(row, column);
             return table;
         }
     }

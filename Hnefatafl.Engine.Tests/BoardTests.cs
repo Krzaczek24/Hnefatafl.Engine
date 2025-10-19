@@ -30,7 +30,7 @@ namespace Hnefatafl.Engine.Tests
 
             // -- Act --
             game.Start();
-            var pawns = game.Board.Where(field => field.Pawn is not null).Select(field => field.Pawn).ToList();
+            var pawns = game.Board.Where(field => !field.IsEmpty).Select(field => field.Pawn).ToList();
 
             // -- Assert --
             Assert.Multiple(() =>

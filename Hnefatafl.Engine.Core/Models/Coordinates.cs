@@ -10,7 +10,7 @@ namespace Hnefatafl.Engine.Models
         internal Coordinates(int row, int column)
         {
             Column = new(column, ((char)('A' + column)).ToString());
-            Row = new(row, row.ToString());
+            Row = new(row, (row + 1).ToString());
         }
 
         public void Deconstruct(out int row, out int column) => (row, column) = (Row.Index, Column.Index);
