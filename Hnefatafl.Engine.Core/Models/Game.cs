@@ -1,31 +1,52 @@
 ﻿using Hnefatafl.Engine.Enums;
+using Hnefatafl.Engine.Events;
 using Hnefatafl.Engine.Models.Pawns;
 using System.Collections.Frozen;
-using System.ComponentModel;
 
 namespace Hnefatafl.Engine.Models
 {
     public class Game
     {
-        // EVENTS OnGameOver OnPawnKilled etc ...
+        public event GameOverEventHandler OnGameOver = delegate { };
+        public event InvalidMoveEventHandler OnInvalidMove = delegate { };
+        public event PawnCapturedEventHandler OnPawnCaptured = delegate { };
+
         public bool IsGameOver { get; private set; }
 
         public Board Board { get; }
 
         public Player CurrentPlayer { get; private set; } = Player.Attacker;
 
-        public IEnumerable<Pawn> CurrentPlayerAvailablePawns => Board.GetPawns(CurrentPlayer, true);
-        public IEnumerable<Pawn> AllPawns { get; private set; } = [];
+        public IReadOnlyCollection<Pawn> CurrentPlayerAvailablePawns => Board.GetPawns(CurrentPlayer).Where(Board.CanMove).ToList().AsReadOnly();
+        public IReadOnlyCollection<Pawn> AllPawns { get; private set; } = [];
+        public IReadOnlyCollection<Pawn> AttackerPawns => AllPawns.Where(pawn => pawn is Attacker).ToList().AsReadOnly();
+        public IReadOnlyCollection<Pawn> DefenderPawns => AllPawns.Where(pawn => pawn is Defender).ToList().AsReadOnly();
+
+        private List<(Coordinates From, Coordinates To)> MoveList { get; } = [];
+        public IReadOnlyCollection<(Coordinates From, Coordinates To)> Moves => MoveList.AsReadOnly();
+        public IEnumerable<Board> History
+        {
+            get
+            {
+                Game game = new();
+                foreach (var (from, to) in Moves)
+                {
+                    game.MakeMove(game.Board[from].Pawn!, game.Board[to], out _);
+                    yield return game.Board;
+                }
+            }
+        }
 
         public Game()
         {
             Board = new(this);
+            Restart();
         }
 
-        public void Start()
+        public void Restart()
         {
             Board.Reset();
-            AllPawns = Board.GetPawns(Player.All, false).ToFrozenSet();
+            AllPawns = Board.GetPawns(Player.All).ToFrozenSet();
             CurrentPlayer = Player.Attacker;
             IsGameOver = false;
         }
@@ -53,76 +74,83 @@ namespace Hnefatafl.Engine.Models
             return MoveValidationResult.Success;
         }
 
-        public MoveResult MakeMove(Pawn pawn, Field field)
+        public MoveResult MakeMove(Pawn movingPawn, Field targetField, out MoveValidationResult moveValidationResult)
         {
-            MoveValidationResult moveValidationResult = CanMakeMove(pawn, field);
+            moveValidationResult = CanMakeMove(movingPawn, targetField);
             if (moveValidationResult is not MoveValidationResult.Success)
+            {
+                OnInvalidMove.Invoke(movingPawn, targetField, moveValidationResult);
                 return MoveResult.None;
+            }
 
-            Board.MovePawn(pawn, field);
+            Board.MovePawn(movingPawn, targetField);
+            MoveList.Add((movingPawn.Field.Coordinates, targetField.Coordinates));
             MoveResult moveResult = MoveResult.PawnMoved;
 
-            if (pawn is King && field.IsCorner)
+            if (movingPawn is King && targetField.IsCorner)
                 moveResult |= MoveResult.KingEscaped;
 
-            foreach (Field adjacentField in Board.GetAdjacentFields(field).Where(IsOccupiedByOpponent))
-                moveResult |= pawn is Attacker && adjacentField.Pawn is King king
-                    ? CheckKingCapture(king)
-                    : CheckPawnsCapture(pawn, adjacentField.Pawn!);
+            Parallel.ForEach(Board.GetAdjacentFields(targetField).Where(IsOccupiedByOpponent), adjacentField =>
+            {
+                if (movingPawn is Attacker
+                && adjacentField.Pawn is King attackedKing
+                && IsKingCaptured(attackedKing, out var assistingFields))
+                {
+                    moveResult |= MoveResult.KingCaptured;
+                    OnPawnCaptured.Invoke(attackedKing, movingPawn, assistingFields);
+                    return;
+                }
 
-            if (moveResult is MoveResult.KingEscaped or MoveResult.KingKilled)
-                EndGame();
+                if (IsPawnCaptured(movingPawn, adjacentField.Pawn!, out Field assistingField))
+                {
+                    moveResult |= adjacentField.Pawn is Defender
+                        ? MoveResult.DefenderPawnCaptured
+                        : MoveResult.AttackerPawnCaptured;
+                    OnPawnCaptured.Invoke(adjacentField.Pawn!, movingPawn, [assistingField]);
+                }
+            });
+
+            if (!AttackerPawns.Where(pawn => pawn.Field is not null).Any())
+                moveResult |= MoveResult.AllAttackerPawnsCaptured;
+
+            if (moveResult.IsGameOverMove())
+                EndGame(moveResult.AsGameOverReason()!.Value);
             else
                 SwapCurrentPlayer();
 
             return moveResult;
 
-            bool IsOccupiedByOpponent(Field field) => !field.IsEmpty && field.Pawn!.Player != pawn.Player;
+            bool IsOccupiedByOpponent(Field field) => !field.IsEmpty && field.Pawn!.Player != movingPawn.Player;
+            void SwapCurrentPlayer() => CurrentPlayer ^= Player.All;
+            void EndGame(GameOverReason reason)
+            {
+                IsGameOver = true;
+                OnGameOver.Invoke(reason, CurrentPlayer);
+            }
         }
 
-        private MoveResult CheckKingCapture(King king)
+        private bool IsKingCaptured(King king, out IEnumerable<Field> assistingFields)
         {
-            var attackersCount = Board
-                .GetAdjacentFields(king.Field)
-                .Where(field => field.IsCenter || field.Pawn is Attacker)
-                .Count();
-
-            return attackersCount is 4
-                ? MoveResult.KingKilled
-                : MoveResult.None;
+            assistingFields = Board.GetAdjacentFields(king.Field).Where(field => field.IsCenter || field.Pawn is Attacker);
+            return assistingFields.Count() is 4;
         }
 
-        private MoveResult CheckPawnsCapture(Pawn movedPawn, Pawn attackedPawn)
+        private bool IsPawnCaptured(Pawn movedPawn, Pawn attackedPawn, out Field assistingField)
         {
+            assistingField = null!;
+
             var vector = attackedPawn.Field.Coordinates - movedPawn.Field.Coordinates;
             Coordinates coordinates = attackedPawn.Field.Coordinates + vector;
             if (!Board.AreValid(coordinates))
-                return MoveResult.None;
+                return false;
 
-            Field oppositeField = Board[coordinates];
-            if (oppositeField.Pawn?.Player != movedPawn.Player && !oppositeField.IsCorner)
-                return MoveResult.None;
+            assistingField = Board[coordinates];
+            if (assistingField.Pawn?.Player != movedPawn.Player && !assistingField.IsCorner)
+                return false;
 
             attackedPawn.Field.Pawn = null;
-            return attackedPawn is Attacker
-                ? MoveResult.AttackerPawnKilled
-                : MoveResult.DefenderPawnKilled;
-        }
-
-        private void SwapCurrentPlayer()
-        {
-            CurrentPlayer = CurrentPlayer switch
-            {
-                Player.Attacker => Player.Defender,
-                Player.Defender => Player.Attacker,
-                _ => throw new InvalidOperationException(),
-            };
-        }
-
-        private void EndGame()
-        {
-            IsGameOver = true;
-            // print winner (current player)
+            attackedPawn.Field = null!;
+            return true;
         }
     }
 }

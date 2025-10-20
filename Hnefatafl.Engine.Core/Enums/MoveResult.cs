@@ -5,10 +5,24 @@
     {
         None = 0,
         PawnMoved = 1 << 0,
-        OpponentPawnKilled = 1 << 1 | PawnMoved,
-        AttackerPawnKilled = 1 << 2 | OpponentPawnKilled,
-        DefenderPawnKilled = 1 << 3 | OpponentPawnKilled,
-        KingKilled = 1 << 4 | DefenderPawnKilled,
-        KingEscaped = 1 << 5 | PawnMoved,
+        OpponentPawnCaptured = 1 << 1 | PawnMoved,
+        DefenderPawnCaptured = 1 << 2 | OpponentPawnCaptured,
+        AttackerPawnCaptured = 1 << 3 | OpponentPawnCaptured,
+        AllAttackerPawnsCaptured = 1 << 4 | AttackerPawnCaptured,
+        KingCaptured = 1 << 5 | DefenderPawnCaptured,
+        KingEscaped = 1 << 6 | PawnMoved,
+    }
+
+    public static class MoveResultExtension
+    {
+        public static bool IsGameOverMove(this MoveResult moveResult)
+            => moveResult is MoveResult.AllAttackerPawnsCaptured
+                          or MoveResult.KingCaptured
+                          or MoveResult.KingEscaped;
+
+        public static GameOverReason? AsGameOverReason(this MoveResult moveResult)
+            => moveResult.IsGameOverMove()
+             ? (GameOverReason)moveResult
+             : null;
     }
 }

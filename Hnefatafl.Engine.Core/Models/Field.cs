@@ -12,7 +12,7 @@ namespace Hnefatafl.Engine.Models
         public bool IsCenter { get; }
         public bool IsDefenderSpawn { get; }
         public bool IsAttackerSpawn { get; }
-        public Pawn? Pawn { get; set; }
+        public Pawn? Pawn { get; internal set; }
     
         public Field(int row, int column)
         {

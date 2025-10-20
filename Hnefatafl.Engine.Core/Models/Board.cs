@@ -10,11 +10,11 @@ namespace Hnefatafl.Engine.Models
         public const int SIZE = 11;
         public const int MIDDLE_INDEX = (SIZE - 1) / 2;
 
-        public Game Game { get; } = game;
+        internal Game Game { get; } = game;
 
         public Field this[Coordinates coordinates] => this[coordinates.Row, coordinates.Column];
 
-        public void Reset()
+        internal void Reset()
         {
             foreach (Field field in this)
             {
@@ -29,16 +29,9 @@ namespace Hnefatafl.Engine.Models
             }
         }
 
-        public IEnumerable<Pawn> GetPawns(Player player, bool withMoveAvailableOnly)
-        {
-            var pawns = this
-                .Where(field => !field.IsEmpty && player.HasFlag(field.Pawn!.Player))
-                .Select(field => field.Pawn!);
-
-            return withMoveAvailableOnly
-                ? pawns.Where(CanMove)
-                : pawns;
-        }
+        public IEnumerable<Pawn> GetPawns(Player player) => this
+            .Where(field => !field.IsEmpty && player.HasFlag(field.Pawn!.Player))
+            .Select(field => field.Pawn!);
 
         public IEnumerable<Field> GetPawnAvailableFields(Pawn pawn)
         {
@@ -82,7 +75,7 @@ namespace Hnefatafl.Engine.Models
         public static bool AreValid(Coordinates coordinates)
         {
             return InRange(coordinates.Row) && InRange(coordinates.Column);
-            static bool InRange(int index) => index is > 0 and < SIZE;
+            static bool InRange(int index) => index is >= 0 and < SIZE;
         }
 
         internal static void MovePawn(Pawn pawn, Field field)

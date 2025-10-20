@@ -7,10 +7,20 @@ namespace Hnefatafl.Engine.Models
         public LabeledIndex Column { get; }
         public LabeledIndex Row { get; }
 
-        internal Coordinates(int row, int column)
+        public Coordinates(int row, int column)
         {
             Column = new(column, ((char)('A' + column)).ToString());
             Row = new(row, (row + 1).ToString());
+        }
+
+        public Coordinates(string label)
+        {
+            char letter = Array.Find(label.ToCharArray(), char.IsLetter);
+            int number = int.Parse(label.Trim(letter));
+            letter = char.ToUpper(letter);
+
+            Column = new(letter - 'A', letter.ToString());
+            Row = new(number - 1, number.ToString());
         }
 
         public void Deconstruct(out int row, out int column) => (row, column) = (Row.Index, Column.Index);
