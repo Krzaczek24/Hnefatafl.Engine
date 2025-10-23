@@ -4,26 +4,21 @@ using Hnefatafl.Engine.Models.Pawns;
 
 namespace Hnefatafl.Engine.AI
 {
-    public class AiPlayer(AiLevel level, Side side)
+    public static class AiPlayer
     {
-        private Random Random { get; } = new();
-        public Side Side { get; } = side;
+        private static Random Random { get; } = new();
 
-        public void GetMove(Game game, out Pawn pawn, out Field field)
+        public static void GetMove(Game game, out Pawn pawn, out Field field)
         {
             if (game.IsGameOver)
                 throw new InvalidOperationException("Cannot make move: game is over.");
 
-            if (game.CurrentSide != Side)
-                throw new InvalidOperationException("Cannot make move: not AI's turn.");
-
-            (pawn, field) = FindBestMove(game, Side, (int)level - 1, out _) ?? (null!, null!);
+            (pawn, field) = FindBestMove(game) ?? (null!, null!);
         }
 
-        private (Pawn pawn, Field target)? FindBestMove(Game game, Side currentSide, int deepLevel, out long score)
+        private static (Pawn pawn, Field target)? FindBestMove(Game game)
         {
-            score = 0;
-            var availablePawns = game.Board.GetPawns(currentSide).Where(game.Board.CanMove).ToArray();
+            var availablePawns = game.Board.GetPawns(game.CurrentSide).Where(game.Board.CanMove).ToArray();
             if (availablePawns.Length == 0)
                 return null;
 
@@ -35,19 +30,11 @@ namespace Hnefatafl.Engine.AI
                 var targets = game.Board.GetPawnAvailableFields(pawn);
                 foreach (Field target in targets)
                 {
-                    // simulate the move on a cloned game
                     Game clone = game.Clone();
                     Pawn simPawn = clone.Board[pawn.Field.Coordinates].Pawn!;
                     Field simTarget = clone.Board[target.Coordinates];
                     MoveResult simResult = clone.MakeMove(simPawn, simTarget, out _);
-                    score = ScoreMove(simResult, clone, currentSide) * 10 + Random.Next(10);
-
-                    if (deepLevel > 0)
-                    {
-                        _ = FindBestMove(clone, currentSide ^ Side.All, deepLevel - 1, out long nextStepScore);
-                        score += currentSide == Side ? nextStepScore : -nextStepScore;
-                    }
-
+                    int score = ScoreMove(simResult, clone) * 10 + Random.Next(10);
                     if (score > bestScore)
                     {
                         bestScore = score;
@@ -59,24 +46,26 @@ namespace Hnefatafl.Engine.AI
             return bestMove;
         }
 
-        private static long ScoreMove(MoveResult result, Game simulatedGame, Side currentSide)
+        private static int ScoreMove(MoveResult result, Game simulatedGame)
         {
             // Big priorities: immediate game end
             if (result.IsGameOverMove())
                 return 1_000_000;
 
-            long score = 0;
+            int score = 0;
             if (result.HasFlag(MoveResult.OpponentPawnCaptured))
                 score += 200;
             if (result.HasFlag(MoveResult.PawnMoved))
                 score += 1;
 
             // Mobility: prefer moves that increase AI available moves and reduce opponent's
-            int myMobility = simulatedGame.Board.GetPawns(currentSide).Where(simulatedGame.Board.CanMove).Count();
-            int oppMobility = simulatedGame.Board.GetPawns(currentSide ^ Side.All).Where(simulatedGame.Board.CanMove).Count();
+            int myMobility = GetMobility(simulatedGame, simulatedGame.CurrentSide);
+            int oppMobility = GetMobility(simulatedGame, simulatedGame.CurrentSide.GetOpponent());
             score += (myMobility - oppMobility) * 5;
 
             return score;
+
+            int GetMobility(Game simulatedGame, Side side) => simulatedGame.Board.GetPawns(side).Where(simulatedGame.Board.CanMove).Count();
         }
     }
 }

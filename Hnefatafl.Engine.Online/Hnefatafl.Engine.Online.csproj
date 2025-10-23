@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Hnefatafl.Engine.Core\Hnefatafl.Engine.csproj" />
+  </ItemGroup>
+
 </Project>

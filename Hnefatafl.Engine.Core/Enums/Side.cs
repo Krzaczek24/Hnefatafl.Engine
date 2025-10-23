@@ -8,4 +8,9 @@
         Defenders = 2,
         All = Attackers | Defenders
     }
+
+    public static class SideExtensions
+    {
+        public static Side GetOpponent(this Side side) => side ^ Side.All;
+    }
 }
