@@ -68,9 +68,9 @@ namespace Hnefatafl.Engine.Tests
                 ("g11", "g8", PawnMoved), ("i4", "h4", AttackerPawnCaptured), // x2
                 ("e11", "e10", PawnMoved), ("f7", "f10", AttackerPawnCaptured),
                 ("g1", "g4", PawnMoved), ("e6", "c6", PawnMoved),
-                ("d11", "b11", PawnMoved), ("c6", "c11", AttackerPawnCaptured), // nie pykło bicie o róg
+                ("d11", "b11", PawnMoved), ("c6", "c11", AttackerPawnCaptured),
                 ("g8", "f8", PawnMoved), ("g7", "g11", PawnMoved),
-                ("f8", "f7", PawnMoved), ("f10", "f8", AttackerPawnCaptured), // do króla
+                ("f8", "f7", PawnMoved), ("f10", "f8", AttackerPawnCaptured),
                 ("d5", "d9", PawnMoved), ("f8", "d8", AttackerPawnCaptured),
                 ("b6", "e6", PawnMoved), ("e7", "e11", AttackerPawnCaptured),
                 ("k7", "g7", PawnMoved), ("e11", "e7", AttackerPawnCaptured),
@@ -125,8 +125,8 @@ namespace Hnefatafl.Engine.Tests
             // -- Arrange --
             GameOverReason? expectedGameOverReason = moves[^1].ExpectedMoveResult.AsGameOverReason();
             GameOverReason? actualGameOverReason = null;
-            Player? expectedGameWinner = expectedGameOverReason?.AsWinner();
-            Player? actualGameWinner = null;
+            Side? expectedGameWinner = expectedGameOverReason?.AsWinner();
+            Side? actualGameWinner = null;
 
             Game game = new();
             game.OnGameOver += (reason, winner) => { actualGameOverReason = reason; actualGameWinner = winner; };

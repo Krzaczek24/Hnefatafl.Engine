@@ -4,6 +4,6 @@ namespace Hnefatafl.Engine.Models.Pawns
 {
     public class Defender(Field field) : Pawn(field)
     {
-        public override Player Player => Player.Defender;
+        public override Side Player => Side.Defenders;
     }
 }

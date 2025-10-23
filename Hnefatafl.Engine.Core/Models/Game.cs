@@ -12,15 +12,16 @@ namespace Hnefatafl.Engine.Models
         public event PawnCapturedEventHandler OnPawnCaptured = delegate { };
 
         public bool IsGameOver { get; private set; }
+        public GameOverReason? GameOverReason { get; private set; }
 
         public Board Board { get; }
 
-        public Player CurrentPlayer { get; private set; } = Player.Attacker;
+        public Side CurrentSide { get; private set; } = Side.Attackers;
 
-        public IReadOnlyCollection<Pawn> CurrentPlayerAvailablePawns => Board.GetPawns(CurrentPlayer).Where(Board.CanMove).ToList().AsReadOnly();
-        public IReadOnlyCollection<Pawn> AllPawns { get; private set; } = [];
-        public IReadOnlyCollection<Pawn> AttackerPawns => AllPawns.Where(pawn => pawn is Attacker).ToList().AsReadOnly();
-        public IReadOnlyCollection<Pawn> DefenderPawns => AllPawns.Where(pawn => pawn is Defender).ToList().AsReadOnly();
+        public IEnumerable<Pawn> CurrentPlayerAvailablePawns => Board.GetPawns(CurrentSide).Where(Board.CanMove);
+        public IEnumerable<Pawn> AllPawns { get; private set; } = [];
+        public IEnumerable<Pawn> AttackerPawns => AllPawns.Where(pawn => pawn is Attacker);
+        public IEnumerable<Pawn> DefenderPawns => AllPawns.Where(pawn => pawn is Defender);
 
         private List<(Coordinates From, Coordinates To)> MoveList { get; } = [];
         public IReadOnlyCollection<(Coordinates From, Coordinates To)> Moves => MoveList.AsReadOnly();
@@ -43,11 +44,17 @@ namespace Hnefatafl.Engine.Models
             Restart();
         }
 
+        internal Game(Field[,] fields)
+        {
+            Board = new(this, fields);
+            AllPawns = Board.GetPawns(Side.All).ToFrozenSet();
+        }
+
         public void Restart()
         {
             Board.Reset();
-            AllPawns = Board.GetPawns(Player.All).ToFrozenSet();
-            CurrentPlayer = Player.Attacker;
+            AllPawns = Board.GetPawns(Side.All).ToFrozenSet();
+            CurrentSide = Side.Attackers;
             IsGameOver = false;
         }
 
@@ -83,8 +90,8 @@ namespace Hnefatafl.Engine.Models
                 return MoveResult.None;
             }
 
-            Board.MovePawn(movingPawn, targetField);
             MoveList.Add((movingPawn.Field.Coordinates, targetField.Coordinates));
+            Board.MovePawn(movingPawn, targetField);
             MoveResult moveResult = MoveResult.PawnMoved;
 
             if (movingPawn is King && targetField.IsCorner)
@@ -92,12 +99,13 @@ namespace Hnefatafl.Engine.Models
 
             Parallel.ForEach(Board.GetAdjacentFields(targetField).Where(IsOccupiedByOpponent), adjacentField =>
             {
-                if (movingPawn is Attacker
-                && adjacentField.Pawn is King attackedKing
-                && IsKingCaptured(attackedKing, out var assistingFields))
+                if (adjacentField.Pawn is King attackedKing)
                 {
-                    moveResult |= MoveResult.KingCaptured;
-                    OnPawnCaptured.Invoke(attackedKing, movingPawn, assistingFields);
+                    if (IsKingCaptured(attackedKing, out var assistingFields))
+                    {
+                        moveResult |= MoveResult.KingCaptured;
+                        OnPawnCaptured.Invoke(attackedKing, movingPawn, assistingFields);
+                    }
                     return;
                 }
 
@@ -121,12 +129,30 @@ namespace Hnefatafl.Engine.Models
             return moveResult;
 
             bool IsOccupiedByOpponent(Field field) => !field.IsEmpty && field.Pawn!.Player != movingPawn.Player;
-            void SwapCurrentPlayer() => CurrentPlayer ^= Player.All;
+            void SwapCurrentPlayer() => CurrentSide ^= Side.All;
             void EndGame(GameOverReason reason)
             {
                 IsGameOver = true;
-                OnGameOver.Invoke(reason, CurrentPlayer);
+                GameOverReason = reason;
+                OnGameOver.Invoke(reason, CurrentSide);
             }
+        }
+
+        public Game Clone()
+        {
+            Field[,] clonedTable = Board.GetEmptyTable();
+            foreach (Field field in Board.Where(field => !field.IsEmpty))
+            {
+                var (row, column) = field.Coordinates;
+                clonedTable[row, column].Pawn = Board[row, column].Pawn switch
+                {
+                    King => new King(clonedTable[row, column]),
+                    Defender => new Defender(clonedTable[row, column]),
+                    Attacker => new Attacker(clonedTable[row, column]),
+                    _ => null
+                };
+            }
+            return new(clonedTable) { CurrentSide = CurrentSide };
         }
 
         private bool IsKingCaptured(King king, out IEnumerable<Field> assistingFields)

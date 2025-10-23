@@ -14,7 +14,7 @@ namespace Hnefatafl.Engine.Models
         public bool IsAttackerSpawn { get; }
         public Pawn? Pawn { get; internal set; }
     
-        public Field(int row, int column)
+        internal Field(int row, int column)
         {
             Coordinates = new(row, column);
 

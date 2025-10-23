@@ -5,14 +5,20 @@ using KrzaqTools.Extensions;
 
 namespace Hnefatafl.Engine.Models
 {
-    public class Board(Game game) : ReadOnlyTable<Field>(GetEmptyTable())
+    public class Board : ReadOnlyTable<Field>
     {
         public const int SIZE = 11;
         public const int MIDDLE_INDEX = (SIZE - 1) / 2;
 
-        internal Game Game { get; } = game;
+        internal Game Game { get; }
 
         public Field this[Coordinates coordinates] => this[coordinates.Row, coordinates.Column];
+
+        public Board(Game game) : this(game, GetEmptyTable()) { }
+        internal Board(Game game, Field[,] fields) : base(fields)
+        {
+            Game = game;
+        }
 
         internal void Reset()
         {
@@ -29,7 +35,7 @@ namespace Hnefatafl.Engine.Models
             }
         }
 
-        public IEnumerable<Pawn> GetPawns(Player player) => this
+        public IEnumerable<Pawn> GetPawns(Side player) => this
             .Where(field => !field.IsEmpty && player.HasFlag(field.Pawn!.Player))
             .Select(field => field.Pawn!);
 
@@ -93,7 +99,7 @@ namespace Hnefatafl.Engine.Models
             return this.SequenceEqual(other);
         }
 
-        private static Field[,] GetEmptyTable()
+        internal static Field[,] GetEmptyTable()
         {
             var table = new Field[SIZE, SIZE];
             for (int row = 0; row < SIZE; row++)

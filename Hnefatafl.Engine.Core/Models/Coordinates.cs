@@ -23,7 +23,7 @@ namespace Hnefatafl.Engine.Models
             Row = new(number - 1, number.ToString());
         }
 
-        public void Deconstruct(out int row, out int column) => (row, column) = (Row.Index, Column.Index);
+        public void Deconstruct(out int row, out int column) => (row, column) = (Row, Column);
 
         public override string ToString() => $"{Column.Label}{Row.Label}";
 

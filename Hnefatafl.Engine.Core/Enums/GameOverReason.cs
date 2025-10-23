@@ -9,9 +9,9 @@
 
     public static class GameOverReasonExtension
     {
-        public static Player AsWinner(this GameOverReason gameOverReason)
+        public static Side AsWinner(this GameOverReason gameOverReason)
             => gameOverReason is GameOverReason.KingCaptured
-             ? Player.Attacker
-             : Player.Defender;
+             ? Side.Attackers
+             : Side.Defenders;
     }
 }
