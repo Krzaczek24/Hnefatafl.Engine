@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hnefatafl.Engine", "Hnefata
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hnefatafl.Engine.Tests", "Hnefatafl.Engine.Tests\Hnefatafl.Engine.Tests.csproj", "{98D61851-F7BC-4EA7-A15D-A961D63761FD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hnefatafl.Engine.AI", "Hnefatafl.Engine.AI\Hnefatafl.Engine.AI.csproj", "{499BC86C-2EA9-0A5A-F80E-5B20D08651B9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hnefatafl.Engine.Online", "Hnefatafl.Engine.Online\Hnefatafl.Engine.Online.csproj", "{EC95A144-6EC2-92B5-5199-1487CEC781ED}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{98D61851-F7BC-4EA7-A15D-A961D63761FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98D61851-F7BC-4EA7-A15D-A961D63761FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98D61851-F7BC-4EA7-A15D-A961D63761FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{499BC86C-2EA9-0A5A-F80E-5B20D08651B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{499BC86C-2EA9-0A5A-F80E-5B20D08651B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{499BC86C-2EA9-0A5A-F80E-5B20D08651B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{499BC86C-2EA9-0A5A-F80E-5B20D08651B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC95A144-6EC2-92B5-5199-1487CEC781ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC95A144-6EC2-92B5-5199-1487CEC781ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC95A144-6EC2-92B5-5199-1487CEC781ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC95A144-6EC2-92B5-5199-1487CEC781ED}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
