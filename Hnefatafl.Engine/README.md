@@ -1,4 +1,4 @@
-﻿# Krzaq.Hnefatafl.Console
+﻿# Krzaq.Hnefatafl.Engine
 Extension that adds few method to `IReadOnlyTable` interface.
 
 ## v1.0.0
