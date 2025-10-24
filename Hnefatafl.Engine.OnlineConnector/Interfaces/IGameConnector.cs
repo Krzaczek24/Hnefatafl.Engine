@@ -1,6 +1,6 @@
-﻿using Hnefatafl.Engine.Online.Models;
+﻿using Hnefatafl.Engine.OnlineConnector.Models;
 
-namespace Hnefatafl.Engine.Online.Interfaces
+namespace Hnefatafl.Engine.OnlineConnector.Interfaces
 {
     public interface IGameConnector : IDisposable
     {

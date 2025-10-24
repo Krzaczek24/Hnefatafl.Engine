@@ -1,6 +1,6 @@
 ﻿using Hnefatafl.Engine.Models;
 
-namespace Hnefatafl.Engine.Online.Models
+namespace Hnefatafl.Engine.OnlineConnector.Models
 {
     public record MoveInfo(Coordinates From, Coordinates To)
     {

@@ -1,12 +1,37 @@
 ﻿using Hnefatafl.Engine.Enums;
 using Hnefatafl.Engine.Models;
 using Hnefatafl.Engine.Models.Pawns;
+using KrzaqTools.Extensions;
 using static Hnefatafl.Engine.Enums.MoveResult;
 
 namespace Hnefatafl.Engine.Tests
 {
     public class GameTests
     {
+        [Test]
+        public void MoveResult_Flags()
+        {
+            // --- Arrange ---
+            const string SEPARATOR = " | ";
+            var moveResults = Enum.GetValues<MoveResult>().WithIndex().Skip(1);
+            int rowHeaderLength = moveResults.Count().ToString().Length + 2
+                + moveResults.Select(x => x.Item.ToString().Length).Max();
+            string Pad(string rowHeader) => rowHeader.PadRight(rowHeaderLength);
+
+            // --- Act ---
+            Console.WriteLine($"{Pad(string.Empty)}{SEPARATOR}{string.Join(SEPARATOR, moveResults.Select(x => x.Index))}{SEPARATOR}");
+            foreach ((MoveResult moveResult, int index) in moveResults)
+            {
+                string rowHeader = $"{index}. {moveResult}";
+                string body = string.Join(SEPARATOR, moveResults.Select(x => moveResult.HasFlag(x.Item) ? 'X' : ' '));
+                Console.WriteLine($"{Pad(rowHeader)}{SEPARATOR}{body}{SEPARATOR}");
+            }
+
+            // --- Assert ---
+            Assert.Pass();
+        }
+
+
         [Test]
         public void StartingBoard_PopulatedWithFields()
         {

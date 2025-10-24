@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Hnefatafl.Engine.Core\Hnefatafl.Engine.csproj" />
+    <ProjectReference Include="..\Hnefatafl.Engine\Hnefatafl.Engine.csproj" />
   </ItemGroup>
 
 </Project>
