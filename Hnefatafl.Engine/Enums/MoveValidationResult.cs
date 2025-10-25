@@ -4,7 +4,7 @@
     {
         Success,
         NonCurrentPlayerPawn,
-        PawnAlreadyHere,
+        PawnAlreadyOnField,
         PawnCannotMove,
         NotInLine,
         PathBlocked,

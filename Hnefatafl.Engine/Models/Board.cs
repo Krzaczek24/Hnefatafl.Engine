@@ -35,8 +35,8 @@ namespace Hnefatafl.Engine.Models
             }
         }
 
-        public IEnumerable<Pawn> GetPawns(Side player) => this
-            .Where(field => !field.IsEmpty && player.HasFlag(field.Pawn!.Player))
+        public IEnumerable<Pawn> GetPawns(Side side) => this
+            .Where(field => !field.IsEmpty && side.HasFlag(field.Pawn!.Side))
             .Select(field => field.Pawn!);
 
         public IEnumerable<Field> GetPawnAvailableFields(Pawn pawn)

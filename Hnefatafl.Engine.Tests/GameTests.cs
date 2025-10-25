@@ -35,25 +35,25 @@ namespace Hnefatafl.Engine.Tests
         [Test]
         public void StartingBoard_PopulatedWithFields()
         {
-            // -- Arrange --
+            // --- Arrange ---
             Game game = new();
 
-            // -- Act --
+            // --- Act ---
 
-            // -- Assert --
+            // --- Assert ---
             Assert.That(game.Board, Has.All.Not.Null.And.All.TypeOf<Field>());
         }
 
         [Test]
         public void StartingBoard_PopulatedWithPawns()
         {
-            // -- Arrange --
+            // --- Arrange ---
             Game game = new();
 
-            // -- Act --
+            // --- Act ---
             var pawns = game.Board.Where(field => !field.IsEmpty).Select(field => field.Pawn).ToList();
 
-            // -- Assert --
+            // --- Assert ---
             Assert.Multiple(() =>
             {
                 Assert.That(pawns, Has.Exactly(24).TypeOf<Attacker>());
@@ -63,15 +63,87 @@ namespace Hnefatafl.Engine.Tests
         }
 
         [Test]
+        public void MoveResult_NonCurrentPlayerPawn()
+        {
+            // --- Arrange ---
+            Game game = new();
+
+            // --- Act ---
+            MoveValidationResult moveResult = game.CanMakeMove("f6", "f6");
+
+            // --- Assert ---
+            Assert.That(moveResult, Is.EqualTo(MoveValidationResult.NonCurrentPlayerPawn));
+        }
+
+        [Test]
+        public void MoveResult_PawnAlreadyOnField()
+        {
+            // --- Arrange ---
+            Game game = new();
+
+            // --- Act ---
+            MoveValidationResult moveResult = game.CanMakeMove("a4", "a4");
+
+            // --- Assert ---
+            Assert.That(moveResult, Is.EqualTo(MoveValidationResult.PawnAlreadyOnField));
+        }
+
+        [Test]
+        public void MoveResult_PawnCannotMove()
+        {
+            // --- Arrange ---
+            Game game = new();
+
+            // --- Act ---
+            MoveValidationResult moveResult = game.CanMakeMove("a6", "a4");
+
+            // --- Assert ---
+            Assert.That(moveResult, Is.EqualTo(MoveValidationResult.PawnCannotMove));
+        }
+
+        [Test]
+        public void MoveResult_NotInLine()
+        {
+            // --- Arrange ---
+            Game game = new();
+
+            // --- Act ---
+            MoveValidationResult moveResult = game.CanMakeMove("a4", "b3");
+
+            // --- Assert ---
+            Assert.That(moveResult, Is.EqualTo(MoveValidationResult.NotInLine));
+        }
+
+        [Test]
+        public void MoveResult_PathBlocked()
+        {
+            // --- Arrange ---
+            Game game = new();
+            var moves = new (string from, string to)[]
+            {
+                ("a4", "f4"),
+                ("a4", "h4"),
+                ("d11", "d3"),
+                ("k7", "f7")
+            };
+
+            // --- Act ---
+            var results = moves.Select(move => game.CanMakeMove(move.from, move.to));
+
+            // --- Assert ---
+            Assert.That(results, Has.All.EqualTo(MoveValidationResult.PathBlocked));
+        }
+
+        [Test]
         public void StartingBoard_CheckAvailableToMovePawns()
         {
             // -- Arrange --
             Game game = new();
 
-            // -- Act --
+            // --- Act ---
             var pawnsAbleToMove = game.AllPawns.Where(game.Board.CanMove).ToList();
 
-            // -- Assert --
+            // --- Assert ---
             Assert.Multiple(() =>
             {
                 Assert.That(pawnsAbleToMove, Has.Exactly(20).TypeOf<Attacker>());
@@ -83,7 +155,7 @@ namespace Hnefatafl.Engine.Tests
         [Test]
         public void EndGame_AllAttackerPawnsCaptured()
         {
-            // -- Assert --
+            // --- Assert ---
             CheckGame(
                 // ----- Attacker ----- // ----- Defender -----
                 ("f10", "e10", PawnMoved), ("d6", "d10", PawnMoved),
@@ -121,7 +193,7 @@ namespace Hnefatafl.Engine.Tests
         [Test]
         public void EndGame_KingCaptured()
         {
-            // -- Assert --
+            // --- Assert ---
             CheckGame(
                 // ----- Attacker ----- // ----- Defender -----
                 ("e1", "e4", PawnMoved), ("f4", "j4", PawnMoved),
@@ -134,7 +206,7 @@ namespace Hnefatafl.Engine.Tests
         [Test]
         public void EndGame_KingEscape()
         {
-            // -- Assert --
+            // --- Assert ---
             CheckGame(
                 // ----- Attacker ----- // ----- Defender -----
                 ("a4", "c4", PawnMoved), ("d6", "d2", PawnMoved),
@@ -159,7 +231,7 @@ namespace Hnefatafl.Engine.Tests
             // -- Act --
             PlayGame(game, moves);
 
-            // -- Assert --
+            // --- Assert ---
             Assert.Multiple(() =>
             {
                 Assert.That(actualGameOverReason, Is.EqualTo(expectedGameOverReason));
@@ -178,9 +250,17 @@ namespace Hnefatafl.Engine.Tests
     {
         public static MoveResult MakeMove(this Game game, string from, string to)
         {
-            Pawn movingPawn = game.Board[new(from)].Pawn!;
-            Field targetField = game.Board[new(to)];
-            return game.MakeMove(movingPawn, targetField, out _);
+            (Field pawnField, Field targetField) = game.GetFields(from, to);
+            return game.MakeMove(pawnField.Pawn!, targetField, out _);
         }
+
+        public static MoveValidationResult CanMakeMove(this Game game, string from, string to)
+        {
+            (Field pawnField, Field targetField) = game.GetFields(from, to);
+            return game.CanMakeMove(pawnField.Pawn!, targetField);
+        }
+
+        public static (Field From, Field To) GetFields(this Game game, string from, string to)
+            => (game.Board[new(from)], game.Board[new(to)]);
     }
 }

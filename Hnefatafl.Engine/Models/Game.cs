@@ -61,34 +61,30 @@ namespace Hnefatafl.Engine.Models
 
         public MoveValidationResult CanMakeMove(Pawn pawn, Field field)
         {
-            if (!CurrentPlayerAvailablePawns.Contains(pawn))
+            if (pawn.Side != CurrentSide)
                 return MoveValidationResult.NonCurrentPlayerPawn;
 
             if (field == pawn.Field)
-                return MoveValidationResult.PawnAlreadyHere;
+                return MoveValidationResult.PawnAlreadyOnField;
 
             if (!Board.CanMove(pawn))
                 return MoveValidationResult.PawnCannotMove;
 
-            (int rowsDiff, int colsDiff) = pawn.Field.Coordinates - field.Coordinates;
-            if (rowsDiff == 0)
+            if (pawn.Field.Coordinates.Row == field.Coordinates.Row)
             {
-                if (PathIsBlocked(Board.GetRow(pawn.Field.Coordinates.Row), Math.Abs(colsDiff)))
+                if (PathIsBlocked(Board.GetRow(pawn.Field.Coordinates.Row)))
                     return MoveValidationResult.PathBlocked;
             }
-            else if (colsDiff == 0)
+            else if (pawn.Field.Coordinates.Column == field.Coordinates.Column)
             {
-                if (PathIsBlocked(Board.GetColumn(pawn.Field.Coordinates.Column), Math.Abs(rowsDiff)))
+                if (PathIsBlocked(Board.GetColumn(pawn.Field.Coordinates.Column)))
                     return MoveValidationResult.PathBlocked;
             }
             else return MoveValidationResult.NotInLine;
 
             return MoveValidationResult.Success;
 
-            bool PathIsBlocked(IEnumerable<Field> line, int requestedDistance) => line
-                .SkipWhile(f => f != pawn.Field && f != field) // go to the pawn or target field
-                .TakeWhile(f => f.IsEmpty || f.Pawn == pawn) // take empty fields or the field with the pawn trying to move
-                .Count() == requestedDistance;
+            bool PathIsBlocked(IEnumerable<Field> line) => GetPath(line, pawn.Field, field).Any(field => !field.IsEmpty && field.Pawn != pawn);
         }
 
         public MoveResult MakeMove(Pawn movingPawn, Field targetField, out MoveValidationResult moveValidationResult)
@@ -138,7 +134,7 @@ namespace Hnefatafl.Engine.Models
 
             return moveResult;
 
-            bool IsOccupiedByOpponent(Field field) => !field.IsEmpty && field.Pawn!.Player != movingPawn.Player;
+            bool IsOccupiedByOpponent(Field field) => !field.IsEmpty && field.Pawn!.Side != movingPawn.Side;
             void SwapCurrentPlayer() => CurrentSide ^= Side.All;
             void EndGame(GameOverReason reason)
             {
@@ -181,12 +177,23 @@ namespace Hnefatafl.Engine.Models
                 return false;
 
             assistingField = Board[coordinates];
-            if (assistingField.Pawn?.Player != movedPawn.Player && !assistingField.IsCorner)
+            if (assistingField.Pawn?.Side != movedPawn.Side && !assistingField.IsCorner)
                 return false;
 
             attackedPawn.Field.Pawn = null;
             attackedPawn.Field = null!;
             return true;
+        }
+
+        private static IEnumerable<Field> GetPath(IEnumerable<Field> boardLine, Field from, Field to)
+        {
+            bool include = false;
+            foreach (Field field in boardLine)
+            {
+                bool isStartOrEnd = field == from || field == to;
+                if ((include ^= isStartOrEnd) || isStartOrEnd)
+                    yield return field;
+            }
         }
     }
 }

@@ -20,4 +20,5 @@ Adds `Board` class representing the game board with the following methods:
 * Get field by coordinates
 * Get selected pawn all available moves
 * Check any pawn if can move
-* 
+* Get field adjacent fields
+* Check if coordinates are on board
