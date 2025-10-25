@@ -1,9 +1,23 @@
 ﻿# Krzaq.Hnefatafl.Engine
-Extension that adds few method to `IReadOnlyTable` interface.
+Library which allows to play Hnefatafl game.
 
 ## v1.0.0
-Supports:
-* `IEnumerable<T> GetColumn<T>(this IReadOnlyTable<T> table, int index)`
-* `IEnumerable<T> GetRow<T>(this IReadOnlyTable<T> table, int index)`
-* `IEnumerable<IEnumerable<T>> GetColumns<T>(this IReadOnlyTable<T> table)`
-* `IEnumerable<IEnumerable<T>> GetRows<T>(this IReadOnlyTable<T> table)`
+Adds `Game` class with methods allowing to:
+* Restart the game
+* Check if a move is valid
+* Make a pawn move
+* Clone the game
+* Get current player
+* Get current board state
+* Get game historical moves
+* Check if the game is over
+* Get current player all available pawns
+* Get all pawns (even those captured ones) of selected player
+
+Adds `Board` class representing the game board with the following methods:
+* Get board size
+* Get all board fields
+* Get field by coordinates
+* Get selected pawn all available moves
+* Check any pawn if can move
+* 

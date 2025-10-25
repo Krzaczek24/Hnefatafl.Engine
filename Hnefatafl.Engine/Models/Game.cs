@@ -1,6 +1,7 @@
 ﻿using Hnefatafl.Engine.Enums;
 using Hnefatafl.Engine.Events;
 using Hnefatafl.Engine.Models.Pawns;
+using KrzaqTools.Extensions;
 using System.Collections.Frozen;
 
 namespace Hnefatafl.Engine.Models
@@ -69,16 +70,25 @@ namespace Hnefatafl.Engine.Models
             if (!Board.CanMove(pawn))
                 return MoveValidationResult.PawnCannotMove;
 
-            if (pawn.Field.Coordinates.Row != field.Coordinates.Row
-            && pawn.Field.Coordinates.Column != field.Coordinates.Column)
-                return MoveValidationResult.NotInLine;
-
-            for (int row = pawn.Field.Coordinates.Row; row <= field.Coordinates.Row; row++)
-                for (int column = pawn.Field.Coordinates.Column; column <= field.Coordinates.Column; column++)
-                    if (!Board[row, column].IsEmpty && Board[row, column].Pawn != pawn)
-                        return MoveValidationResult.PathBlocked;
+            (int rowsDiff, int colsDiff) = pawn.Field.Coordinates - field.Coordinates;
+            if (rowsDiff == 0)
+            {
+                if (PathIsBlocked(Board.GetRow(pawn.Field.Coordinates.Row), Math.Abs(colsDiff)))
+                    return MoveValidationResult.PathBlocked;
+            }
+            else if (colsDiff == 0)
+            {
+                if (PathIsBlocked(Board.GetColumn(pawn.Field.Coordinates.Column), Math.Abs(rowsDiff)))
+                    return MoveValidationResult.PathBlocked;
+            }
+            else return MoveValidationResult.NotInLine;
 
             return MoveValidationResult.Success;
+
+            bool PathIsBlocked(IEnumerable<Field> line, int requestedDistance) => line
+                .SkipWhile(f => f != pawn.Field && f != field) // go to the pawn or target field
+                .TakeWhile(f => f.IsEmpty || f.Pawn == pawn) // take empty fields or the field with the pawn trying to move
+                .Count() == requestedDistance;
         }
 
         public MoveResult MakeMove(Pawn movingPawn, Field targetField, out MoveValidationResult moveValidationResult)
